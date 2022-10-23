@@ -1,0 +1,118 @@
+= Processamento Digital de Imagens - Exercícios
+:toc: left
+:source-highlighter: highlightjs
+
+Olá, meu nome é Igor Sérgio e essa página contém a resolução comentada dos exercícios propostos para a disciplina Processamento Digital de Imagens - DCA0445 (UFRN).
+
+== 1. Manipulando pixels de uma imagem
+
+=== 1.1. Negativo
+
+:imagesdir: image/
+
+Antes:
+
+image::biel.png[]
+
+Depois:
+
+image::negativo.png[]
+
+[source,C++]
+----
+#include <iostream>
+#include <opencv2/opencv.hpp>
+const int MAX = 100;
+
+int main(int, char**){
+  cv::Mat image;
+  cv::Vec3b val;
+  char nome_img[MAX] = "biel.png"; // Definir inicialmente o nome do arquivo a ser editado.
+
+  int x1, x2, y1, y2;
+
+  std:: cout << "Inserir x1, x2, y1, y2:" << std::endl;
+  std:: cin >> x1 >> x2 >> y1 >> y2;
+
+  image= cv::imread(nome_img,cv::IMREAD_GRAYSCALE);
+  if(!image.data)
+    std::cout << "nao abriu" << nome_img << std::endl;
+
+  cv::namedWindow("janela", cv::WINDOW_AUTOSIZE);
+
+  for(int i=x1;i<x2;i++){ // 200 to 210
+    for(int j=y1;j<y2;j++){ // 10 to 200
+      image.at<uchar>(i,j)= 255 - image.at<uchar>(i,j);
+    }
+  }
+
+  cv::imshow("janela", image);
+  cv::imwrite("negativo.png", image);
+  cv::waitKey();
+
+
+  return 0;
+}
+----
+
+=== 1.2. Troca de regiões
+
+Antes:
+
+image::biel.png[]
+
+Depois:
+
+image::Troca.png[]
+
+
+[source,C++]
+----
+#include <iostream>
+#include <opencv2/opencv.hpp>
+const int MAX = 100;
+
+int main(int, char**){
+  cv::Mat image, img_clone;
+
+  int largura, altura;
+
+  char nome_img[MAX] = "biel.png"; // Definir inicialmente o nome do arquivo a ser editado.
+
+
+  image= cv::imread(nome_img,cv::IMREAD_GRAYSCALE);
+  if(!image.data)
+    std::cout << "nao abriu" << nome_img << std::endl;
+
+  cv::namedWindow("janela", cv::WINDOW_AUTOSIZE);
+
+      largura = image.size().width;
+      altura = image.size().height;
+
+   // Primeiro quadrante
+    img_clone = image.clone();
+
+    for(int i=0;i<altura/2;i++){
+    for(int j=0;j<largura/2;j++){
+      img_clone.at<uchar>(i,j) = image.at<uchar>(i+altura/2,j+largura/2);
+      img_clone.at<uchar>(i+altura/2,j+largura/2) = image.at<uchar>(i,j);
+      img_clone.at<uchar>(i+altura/2,j) = image.at<uchar>(i,j+largura/2);
+      img_clone.at<uchar>(i,j+largura/2) = image.at<uchar>(i+altura/2,j);
+    }
+  }
+
+
+  cv::imshow("janela", img_clone);
+  imwrite("Troca.png", img_clone);
+  cv::waitKey();
+
+
+  return 0;
+}
+----
+
+
+
+
+
+
