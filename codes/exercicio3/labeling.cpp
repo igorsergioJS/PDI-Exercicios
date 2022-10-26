@@ -6,7 +6,7 @@ using namespace cv;
 int main(int argc, char** argv) {
   cv::Mat image, realce;
   int width, height;
-  int nobjects;
+  int nobjects, nholes;
 
   cv::Point p;
   image = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
@@ -22,6 +22,25 @@ int main(int argc, char** argv) {
 
   p.x = 0;
   p.y = 0;
+
+  //Remover objetos dos cantos
+  for (int i = 0; i < height; i++) {
+    for (int j = 0; j < width; j++) {
+      if (image.at<uchar>(i, j) == 255 && (i == 0 || i == width - 1 || j == 0 || j == height - 1)) {
+        p.x = j;
+        p.y = i;
+        cv::floodFill(image, p, 0);
+      }
+    }
+  }
+  cv::imwrite("cantos.png", image);
+
+  //Pintar o fundo de outro tom de cinza
+  p.x = 0;
+  p.y = 0;
+  cv::floodFill(image, p, 100);
+   cv::imwrite("fundocinza.png", image);
+
 
   // busca objetos presentes
   nobjects = 0;
@@ -39,9 +58,26 @@ int main(int argc, char** argv) {
       }
     }
   }
-  std::cout << "a figura tem " << nobjects << " bolhas\n";
-  cv::imshow("image", image);
-  cv::imwrite("labeling.png", image);
-  cv::waitKey();
+
+  cv::imwrite("contagemTotal.png", image);
+
+    nholes = 0;
+  for (int i = 0; i < height; i++) {
+    for (int j = 0; j < width; j++) {
+      if (image.at<uchar>(i, j) == 0) {
+        nholes++;
+        p.x = j;
+        p.y = i;
+        cv::floodFill(image, p, nholes);
+      }
+    }
+  }
+
+
+  cv::imwrite("contagemBuracos.png", image);
+
+
+  std::cout << "a figura tem: " << nobjects << " objetos, sendo: \n"<< nobjects - nholes << " bolhas completas e " << nholes << " buracos. \n";
+
   return 0;
 }

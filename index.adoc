@@ -1,22 +1,19 @@
 = Processamento Digital de Imagens - Exercícios
 :toc: left
 :source-highlighter: highlightjs
+:stem: latexmath
+:imagesdir: image/
 
 Olá, meu nome é Igor Sérgio e essa página contém a resolução comentada dos exercícios propostos para a disciplina Processamento Digital de Imagens - DCA0445 (UFRN).
 
 == 1. Manipulando pixels de uma imagem
 
-=== 1.1. Negativo
+=== 1.1. Regiões
 
-:imagesdir: image/
 
-Antes:
 
-image::biel.png[]
 
-Depois:
-
-image::negativo.png[]
+Utilizando o programa indicado como referência, foi implementado um programa que solicita ao usuário as coordenadas de dois pontos latexmath:[P_1] e   latexmath:[P_2], indicando uma região para a imagem em tons de cinza se tornar negativa.
 
 [source,C++]
 ----
@@ -53,18 +50,28 @@ int main(int, char**){
 
   return 0;
 }
+
 ----
 
-=== 1.2. Troca de regiões
-
-Antes:
+Original:
 
 image::biel.png[]
 
-Depois:
+Com efeito aplicado na região escolhida:
+
+image::negativo.png[]
+
+=== 1.2. Troca de regiões
+
+Com o mesmo programa anterior usado como referência, ocorre agora a troca dos quadrantes em diagonal. Identificando os limites no plano de todos os quadrantes, basta aplicar em uma nova imagem vazia os quadrantes trocados diagonalmente.
+
+Original:
+
+image::biel.png[]
+
+Com quadrantes trocados em diagonal:
 
 image::Troca.png[]
-
 
 [source,C++]
 ----
@@ -110,6 +117,448 @@ int main(int, char**){
   return 0;
 }
 ----
+
+== 2. Preenchendo regiões
+
+image::bolhas.png["Imagem Original"]
+
+Para o problema em questão, caso existam mais de 255 objetos na cena o comprometimento se deve a limitação do tipo uchar. A utilização de outro tipo primitivo, como um inteiro.
+
+Para contabilizar a quantidade de figuras inteiras, com bolhas e remover imagens incompletas que tocam nas bordas, foi utilizada a seguinte solução:
+
+=== 2.1. Removendo os objetos dos cantos
+
+Para remover os objetos que encostam nas bordas da imagem, foi usada uma condição que se o pixel em questão for branco e estiver em contato com alguma das bordas, o algoritmo do floodfill é chamado para preencher todos os píxels brancos vizinhos por pixels pretos, até o objeto está totalmente removido.
+
+image::cantos.png["Objetos que encostam os cantos removidos"]
+
+=== 2.2. Pintando o fundo com outro tom de cinza
+
+Utilizando o tom de cinza de valor 100, todo o fundo preto da imagem é preenchido fazendo uma chamada única da função floodfield.
+
+image::fundocinza.png["Fundo alterado para outro tom de cinza"]
+
+=== 2.3. Contagem dos objetos presentes
+
+Reaproveitando o mesmo laço encadeado utilizado no exemplo, é feito o labeling os objetos, assim como a contagem total.
+
+image::contagemTotal.png["Imagem após contagem total. Talvez imperceptível, mas o tom de cinza vai ficando cada vez mais claro no preencimento dos objetos a medida que os objetos se localizam mais abaixo da figura"]
+
+=== 2.4. Contagem dos buracos e resultado final
+
+Agora, basta procurar na imagem os pixels com valor 0 e incrementar o contador seguido da região em questão ser preenchida com outro tom de cinza.
+
+image::contagemBuracos.png["Buracos após serem rotulados"]
+
+
+Assim, os resultados procurados podem ser obtidos pelo terminal após a execução do código.
+
+image::console.png[]
+
+
+[source,C++]
+----
+#include <iostream>
+#include <opencv2/opencv.hpp>
+
+using namespace cv;
+
+int main(int argc, char** argv) {
+  cv::Mat image, realce;
+  int width, height;
+  int nobjects, nholes;
+
+  cv::Point p;
+  image = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
+
+  if (!image.data) {
+    std::cout << "imagem nao carregou corretamente\n";
+    return (-1);
+  }
+
+  width = image.cols;
+  height = image.rows;
+  std::cout << width << "x" << height << std::endl;
+
+  p.x = 0;
+  p.y = 0;
+
+  //Remover objetos dos cantos
+  for (int i = 0; i < height; i++) {
+    for (int j = 0; j < width; j++) {
+      if (image.at<uchar>(i, j) == 255 && (i == 0 || i == width - 1 || j == 0 || j == height - 1)) {
+        p.x = j;
+        p.y = i;
+        cv::floodFill(image, p, 0);
+      }
+    }
+  }
+  cv::imwrite("cantos.png", image);
+
+  //Pintar o fundo de outro tom de cinza
+  p.x = 0;
+  p.y = 0;
+  cv::floodFill(image, p, 100);
+   cv::imwrite("fundocinza.png", image);
+
+
+  // busca objetos presentes
+  nobjects = 0;
+  for (int i = 0; i < height; i++) {
+    for (int j = 0; j < width; j++) {
+      if (image.at<uchar>(i, j) == 255) {
+        // achou um objeto
+        nobjects++;
+        // para o floodfill as coordenadas
+        // x e y sao trocadas.
+        p.x = j;
+        p.y = i;
+        // preenche o objeto com o contador
+        cv::floodFill(image, p, nobjects);
+      }
+    }
+  }
+
+  cv::imwrite("contagemTotal.png", image);
+
+    nholes = 0;
+  for (int i = 0; i < height; i++) {
+    for (int j = 0; j < width; j++) {
+      if (image.at<uchar>(i, j) == 0) {
+        nholes++;
+        p.x = j;
+        p.y = i;
+        cv::floodFill(image, p, nholes);
+      }
+    }
+  }
+
+
+  cv::imwrite("contagemBuracos.png", image);
+
+
+  std::cout << "a figura tem: " << nobjects << " objetos, sendo: \n"<< nobjects - nholes << " bolhas completas e " << nholes << " buracos. \n";
+
+  return 0;
+}
+
+----
+
+== 3. Manipulação de histogramas
+
+=== 3.1 Equalizador
+
+Para equalizar a captura de vídeo, foi feita a conversão para tons de cinza da imagem de entrada, assim como sua equalização pela função equalizeHist. Assim foi possível calcular os histogramas normalizados.
+
+Pouca iluminação ambiente:
+
+image::equalize.png["Na esquerda a imagem original convertida para tons de cinza e na direita a imagem equalizda. Ambas com histograma amostra "]
+
+Iluminação adequada:
+
+image::equalize2.png["Resultado esperado para um local mais iluminado, levando em consideração que a equalização apresenta resultados mais favoráveis para visualização para imagens com tons mais escuros"]
+
+[source,C++]
+----
+#include <iostream>
+#include <opencv2/opencv.hpp>
+
+using namespace cv;
+
+int main(int argc, char** argv){
+  cv::Mat image, cinza, saida, histG, histE;
+  int width, height;
+  cv::VideoCapture cap;
+  std::vector<cv::Mat> planes;
+  int nbins = 64;
+  float range[] = {0, 255};
+  const float *histrange = { range };
+  bool uniform = true;
+  bool acummulate = false;
+  int key;
+
+	cap.open(1);
+
+  if(!cap.isOpened()){
+    std::cout << "cameras indisponiveis";
+    return -1;
+  }
+
+  cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
+  cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+  width = cap.get(cv::CAP_PROP_FRAME_WIDTH);
+  height = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+
+  std::cout << "largura = " << width << std::endl;
+  std::cout << "altura  = " << height << std::endl;
+
+  int histw = nbins, histh = nbins/2;
+  cv::Mat histGimg(histh, histw, CV_BGR2GRAY, Scalar(0));
+  cv::Mat histEimg(histh, histw, CV_BGR2GRAY, Scalar(0));
+
+
+  while(1){
+    //captura a imagem
+    cap >> image;
+    //transforma para escala de cinza
+    cvtColor( image, cinza, CV_BGR2GRAY );
+    //equaliza o histograma
+    equalizeHist( cinza, saida );
+
+    calcHist(&cinza, 1, 0, Mat(), histG, 1, &nbins, &histrange, uniform, acummulate);
+
+    calcHist(&saida, 1, 0, Mat(), histE, 1, &nbins, &histrange, uniform, acummulate);
+
+    normalize(histG, histG, 0, histGimg.rows, NORM_MINMAX, -1, Mat());
+    normalize(histE, histE, 0, histEimg.rows, NORM_MINMAX, -1, Mat());
+
+    histGimg.setTo(Scalar(0));
+    histEimg.setTo(Scalar(0));
+
+    for(int i=0; i<nbins; i++){
+      line(histGimg,
+           Point(i, histh),
+           Point(i, histh-cvRound(histG.at<float>(i))),
+           Scalar(255), 1, 8, 0);
+      line(histEimg,
+           Point(i, histh),
+           Point(i, histh-cvRound(histE.at<float>(i))),
+           Scalar(255), 1, 8, 0);
+    }
+
+    histGimg.copyTo(cinza(cv::Rect(0, 0,nbins, histh)));
+    histEimg.copyTo(saida(cv::Rect(0, 0,nbins, histh)));
+
+    imshow("Original", saida);
+    imshow("cinza", cinza);
+
+    key = cv::waitKey(30);
+    if(key == 27) break;
+  }
+  return 0;
+}
+
+----
+
+=== 3.2 Detecção de movimento
+
+Reaproveitando boa parte do código do item anterior e comparando os histogramas como indicado no enunciado do exercício, foi possível obter o seguinte resultado:
+
+image::motiondetector.gif[]
+
+
+[source,C++]
+----
+#include <iostream>
+#include <opencv2/opencv.hpp>
+
+using namespace cv;
+
+int main(int argc, char** argv){
+  Mat image, hist0, hist1, cinza;
+  int width, height;
+  cv::VideoCapture cap;
+  std::vector<cv::Mat> planes;
+  int nbins = 64;
+  float range[] = {0, 256};
+  double comparar;
+  int cont = 0;
+  double limiar = 0.99;
+  const float *histrange = { range };
+  bool uniform = true;
+  bool acummulate = false;
+  int key;
+
+	cap.open(1);
+
+  if(!cap.isOpened()){
+    std::cout << "cameras indisponiveis";
+    return -1;
+  }
+
+  cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
+  cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+  width = cap.get(cv::CAP_PROP_FRAME_WIDTH);
+  height = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+
+  std::cout << "largura = " << width << std::endl;
+  std::cout << "altura  = " << height << std::endl;
+
+    calcHist(&cinza, 1, 0, Mat(), hist0, 1, &nbins, &histrange, uniform, acummulate);
+
+  while(1){
+    //captura a imagem
+    cap >> image;
+
+    cvtColor( image, cinza, CV_BGR2GRAY );
+
+    calcHist(&cinza, 1, 0, Mat(), hist1, 1, &nbins, &histrange, uniform, acummulate);
+
+    comparar = compareHist(hist0, hist1, CV_COMP_CORREL);
+
+    if(comparar < limiar)
+    {
+        std::cout << "Movimento Detectado" << "(" << cont << ")" << "!!! \n ";
+        cont++;
+    }
+    imshow("image", image);
+
+    calcHist(&cinza, 1, 0, Mat(), hist0, 1, &nbins, &histrange, uniform, acummulate);
+
+    key = cv::waitKey(30);
+    if(key == 27) break;
+  }
+  return 0;
+}
+
+----
+
+== 4. Filtro espacial - Laplaciano do gaussiano
+
+Realizando uma convolução entre as duas máscaras, foi obtido como resultado uma nova máscara 5x5 responsável pela transformação solicitada no exercício.
+
+Seguem as imagens capturadas em tons de cinza, com o filtro laplaciano e com o laplaciano do gaussiano, respectivamente:
+
+
+image::laplace.png[]
+
+Observa-se que o filtro obtido pela convolução atenua as diferenças entre tons claros e escuros, causando um maior contraste, assim como maior formação de falso contorno.
+
+[source,C++]
+----
+#include <iostream>
+#include <opencv2/opencv.hpp>
+
+void printmask(cv::Mat &m)
+{
+    for (int i = 0; i < m.size().height; i++)
+    {
+        for (int j = 0; j < m.size().width; j++)
+        {
+            std::cout << m.at<float>(i, j) << ",";
+        }
+        std::cout << "\n";
+    }
+}
+
+int main(int, char **)
+{
+    cv::VideoCapture cap;  // open the default camera
+
+    float lap_gauss[]= {0,0,-1,0,0,
+                                   0,-1,-2,-1,0,
+                                   -1,-2,16,-2,-1,
+                                   0,-1,-2,-1,0,
+                                   0,0,-1,0,0
+                                  };
+    float media[] = {0.1111, 0.1111, 0.1111, 0.1111, 0.1111,
+                     0.1111, 0.1111, 0.1111, 0.1111
+                    };
+    float gauss[] = {0.0625, 0.125,  0.0625, 0.125, 0.25,
+                     0.125,  0.0625, 0.125,  0.0625
+                    };
+    float horizontal[] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
+    float vertical[] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
+    float laplacian[] = {0, -1, 0, -1, 4, -1, 0, -1, 0};
+    float boost[] = {0, -1, 0, -1, 5.2, -1, 0, -1, 0};
+
+    cv::Mat frame, framegray, frame32f, frameFiltered;
+    cv::Mat mask(3, 3, CV_32F);
+    cv::Mat result;
+    double width, height;
+    int absolut;
+    char key;
+
+    cap.open(1);
+
+    if (!cap.isOpened())  // check if we succeeded
+        return -1;
+
+    cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+    width = cap.get(cv::CAP_PROP_FRAME_WIDTH);
+    height = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+    std::cout << "largura=" << width << "\n";
+    ;
+    std::cout << "altura =" << height << "\n";
+    ;
+    std::cout << "fps    =" << cap.get(cv::CAP_PROP_FPS) << "\n";
+    std::cout << "format =" << cap.get(cv::CAP_PROP_FORMAT) << "\n";
+
+    cv::namedWindow("filtroespacial", cv::WINDOW_NORMAL);
+    cv::namedWindow("original", cv::WINDOW_NORMAL);
+
+    mask = cv::Mat(3, 3, CV_32F, media);
+
+    absolut = 1;  // calcs abs of the image
+
+    for (;;)
+    {
+        cap >> frame;  // get a new frame from camera
+        cv::cvtColor(frame, framegray, cv::COLOR_BGR2GRAY);
+        cv::flip(framegray, framegray, 1);
+        cv::imshow("original", framegray);
+        framegray.convertTo(frame32f, CV_32F);
+        cv::filter2D(frame32f, frameFiltered, frame32f.depth(), mask,
+                     cv::Point(1, 1), 0);
+        if (absolut)
+        {
+            frameFiltered = cv::abs(frameFiltered);
+        }
+
+        frameFiltered.convertTo(result, CV_8U);
+
+        cv::imshow("filtroespacial", result);
+
+        key = (char)cv::waitKey(10);
+        if (key == 27) break;  // esc pressed!
+        switch (key)
+        {
+        case 'a':
+            absolut = !absolut;
+            break;
+        case 'm':
+            mask = cv::Mat(3, 3, CV_32F, media);
+            printmask(mask);
+            break;
+        case 'g':
+            mask = cv::Mat(3, 3, CV_32F, gauss);
+            printmask(mask);
+            break;
+        case 'h':
+            mask = cv::Mat(3, 3, CV_32F, horizontal);
+            printmask(mask);
+            break;
+        case 'v':
+            mask = cv::Mat(3, 3, CV_32F, vertical);
+            printmask(mask);
+            break;
+        case 'l':
+            mask = cv::Mat(3, 3, CV_32F, laplacian);
+            printmask(mask);
+            break;
+        case 'b':
+            mask = cv::Mat(3, 3, CV_32F, boost);
+            break;
+
+        case 'f':
+            mask = cv::Mat(5, 5, CV_32F, lap_gauss);
+            printmask(mask);
+            break;
+
+
+        default:
+            break;
+        }
+    }
+    return 0;
+}
+
+
+----
+
+
+
 
 
 
