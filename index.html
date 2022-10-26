@@ -962,7 +962,7 @@ void printmask(cv::Mat &amp;m)
 
 int main(int, char **)
 {
-    cv::VideoCapture cap;  // open the default camera
+    cv::VideoCapture cap;
 
     float lap_gauss[]= {0,0,-1,0,0,
                                    0,-1,-2,-1,0,
@@ -990,7 +990,7 @@ int main(int, char **)
 
     cap.open(1);
 
-    if (!cap.isOpened())  // check if we succeeded
+    if (!cap.isOpened())
         return -1;
 
     cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
@@ -1009,11 +1009,11 @@ int main(int, char **)
 
     mask = cv::Mat(3, 3, CV_32F, media);
 
-    absolut = 1;  // calcs abs of the image
+    absolut = 1;
 
     for (;;)
     {
-        cap &gt;&gt; frame;  // get a new frame from camera
+        cap &gt;&gt; frame;
         cv::cvtColor(frame, framegray, cv::COLOR_BGR2GRAY);
         cv::flip(framegray, framegray, 1);
         cv::imshow("original", framegray);
@@ -1030,7 +1030,7 @@ int main(int, char **)
         cv::imshow("filtroespacial", result);
 
         key = (char)cv::waitKey(10);
-        if (key == 27) break;  // esc pressed!
+        if (key == 27) break;
         switch (key)
         {
         case 'a':
@@ -1079,7 +1079,7 @@ int main(int, char **)
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2022-10-26 15:29:38 -03
+Last updated 2022-10-26 15:38:30 -03
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.9.1/styles/github.min.css">
