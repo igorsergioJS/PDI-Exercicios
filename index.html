@@ -1167,69 +1167,61 @@ int main(int argc, char **argv)
             se deve a escolha aleatória dos centros, após a mudança do parâmetro
             especificado no enunciado do exercício.</p>
         </div>
-      </div>
-      <div class="listingblock">
-        <div class="content">
-          <pre class="highlight"><code class="language-C++" data-lang="C++">#include &lt;iostream&gt;
-            #include &lt;cstdlib&gt;
-              #include "opencv2/opencv.hpp"
-              
-              using namespace cv;
-              
-              int main(int argc, char **argv) {
-                  for (int i = 0; i < 10; i++) {
-                      int nClusters = 8;
-                      Mat rotulos;
-                      int nRodadas = 1;
-                      Mat centros;
-              
-                      Mat img = imread(argv[1], cv::IMREAD_COLOR);
-                      Mat samples(img.rows * img.cols, 3, CV_32F);
-              
-                      for (int y = 0; y < img.rows; y++) {
-                          for (int x = 0; x < img.cols; x++) {
-                              for (int z = 0; z < 3; z++) {
-                                  samples.at<float>(y + x * img.rows, z) =
-                                      img.at<Vec3b>(y, x)[z];
-                              }
-                          }
-                      }
-              
-                      kmeans(samples, nClusters, rotulos,
-                             TermCriteria(TermCriteria::MAX_ITER | TermCriteria::EPS, 10000,
-                                          0.0001),
-                             nRodadas, KMEANS_RANDOM_CENTERS, centros);
-              
-                      Mat rotulada(img.size(), img.type());
-              
-                      for (int y = 0; y < img.rows; y++) {
-                          for (int x = 0; x < img.cols; x++) {
-                              int indice = rotulos.at<int>(y + x * img.rows, 0);
-                              rotulada.at<Vec3b>(y, x)[0] =
-                                  (uchar)centros.at<float>(indice, 0);
-                              rotulada.at<Vec3b>(y, x)[1] =
-                                  (uchar)centros.at<float>(indice, 1);
-                              rotulada.at<Vec3b>(y, x)[2] =
-                                  (uchar)centros.at<float>(indice, 2);
-                          }
-                      }
-              
-                      char output[50];
-              
-                      sprintf(output, "output%d.jpg", i + 1);
-              
-                      imwrite(output, rotulada);
-                  }
-              }
+        <div class="listingblock">
+          <div class="content">
+            <pre class="highlight"><code class="language-C++" data-lang="C++">#include &lt;cstdlib&gt;
+#include &lt;opencv2/opencv.hpp&gt;
 
+using namespace cv;
+
+int main(int argc, char **argv) {
+    for (int i = 0; i &lt; 10; i++) {
+        int nClusters = 8;
+        Mat rotulos;
+        int nRodadas = 1;
+        Mat centros;
+
+        Mat img = imread(argv[1], cv::IMREAD_COLOR);
+        Mat samples(img.rows * img.cols, 3, CV_32F);
+
+        for (int y = 0; y &lt; img.rows; y++) {
+            for (int x = 0; x &lt; img.cols; x++) {
+                for (int z = 0; z &lt; 3; z++) {
+                    samples.at&lt;float&gt;(y + x * img.rows, z) =
+                        img.at&lt;Vec3b&gt;(y, x)[z];
+                }
+            }
+        }
+
+        kmeans(samples, nClusters, rotulos,
+               TermCriteria(TermCriteria::MAX_ITER | TermCriteria::EPS, 10000,
+                            0.0001),
+               nRodadas, KMEANS_RANDOM_CENTERS, centros);
+
+        Mat rotulada(img.size(), img.type());
+
+        for (int y = 0; y &lt; img.rows; y++) {
+            for (int x = 0; x &lt; img.cols; x++) {
+                int indice = rotulos.at&lt;int&gt;(y + x * img.rows, 0);
+                rotulada.at&lt;Vec3b&gt;(y, x)[0] =
+                    (uchar)centros.at&lt;float&gt;(indice, 0);
+                rotulada.at&lt;Vec3b&gt;(y, x)[1] =
+                    (uchar)centros.at&lt;float&gt;(indice, 1);
+                rotulada.at&lt;Vec3b&gt;(y, x)[2] =
+                    (uchar)centros.at&lt;float&gt;(indice, 2);
+            }
+        }
+
+        char output[50];
+
+        sprintf(output, "output%d.jpg", i + 1);
+
+        imwrite(output, rotulada);
+    }
 }</code></pre>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-    </div>
-  </div>
-</div>
     </div>
     <div class="sect1">
       <h2 id="_4_morfologia_matem_tica">4. Morfologia Matemática</h2>
@@ -1267,84 +1259,78 @@ int main(int argc, char **argv)
             <img src="image//clock_morf.png" alt="clock morf">
           </div>
         </div>
-                <div class="listingblock">
+        <div class="listingblock">
           <div class="content">
             <pre class="highlight"><code class="language-C++" data-lang="C++">#include &lt;iostream&gt;
-#include "opencv2/opencv.hpp"
-#include &lt;iostream&gt;
+#include &lt;opencv2/opencv.hpp&gt;
 
-  
-  int main(int argc, char** argv) {
-    cv::Mat image, erosao, dilatacao, abertura, fechamento, abertfecha;
-    cv::Mat str;
-    cv::Mat img1, img2;
-  
-    if (argc != 2) {
-      std::cout << "morfologia entrada saida\n";
-    }
-  
-    image = cv::imread(argv[1], cv::IMREAD_UNCHANGED);
-  
-  
-    if(image.empty()) {
-      std::cout << "Erro ao carregar a imagem: " << argv[1] << std::endl;
-      return -1;
-    }
-  
-    // elemento estruturante
-    str = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
-  
-  
-    cv::dilate(image, img1, str);
-    str = cv::getStructuringElement(cv::MORPH_ELLIPSE , cv::Size(2, 2));
-    cv::dilate(img1,img2,str);
-    cv::dilate(img2, img1, str);
-    cv::dilate(img1,img2,str);
-  
-    str = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
-    cv::erode(img2, img1, str);
-    cv::erode(img1, img2, str);
-    cv::erode(img2, img1, str);
-    cv::erode(img1, img2, str);
-    cv::erode(img2, img1, str);
-    cv::erode(img1, img2, str);
-    cv::erode(img2, img1, str);
-    str = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
-    cv::erode(img1, img2, str);
-  
-    str = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
-  
-    cv::dilate(img2, img1, str);
-    cv::dilate(img1,img2,str);
-    cv::dilate(img2, img1, str);
-    cv::dilate(img1,img2,str);
-    cv::dilate(img2, img1, str);
-    cv::dilate(img1,img2,str);
-    cv::dilate(img2, img1, str);
-  
-    str = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
-    cv::erode(img1, img2, str);
-    cv::erode(img2, img1, str);
-    cv::erode(img1, img2, str);
-    cv::erode(img1, img2, str);
-    cv::erode(img2, img1, str);
-  
-  
-    cv::Mat matArray[] = {image, img1, img2};
-    cv::hconcat(matArray, 3, image);
-  
-    cv::imshow("morfologia", image);
-    cv::imwrite("clock_morf.png",img1);
-  
-    cv::waitKey();
-    return 0;
+int main(int argc, char** argv) {
+  cv::Mat image, erosao, dilatacao, abertura, fechamento, abertfecha;
+  cv::Mat str;
+  cv::Mat img1, img2;
+
+  if (argc != 2) {
+    std::cout &lt;&lt; "morfologia entrada saida\n";
   }
-  
+
+  image = cv::imread(argv[1], cv::IMREAD_UNCHANGED);
+
+
+  if(image.empty()) {
+    std::cout &lt;&lt; "Erro ao carregar a imagem: " &lt;&lt; argv[1] &lt;&lt; std::endl;
+    return -1;
+  }
+
+  // elemento estruturante
+  str = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+
+
+  cv::dilate(image, img1, str);
+  str = cv::getStructuringElement(cv::MORPH_ELLIPSE , cv::Size(2, 2));
+  cv::dilate(img1,img2,str);
+  cv::dilate(img2, img1, str);
+  cv::dilate(img1,img2,str);
+
+  str = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+  cv::erode(img2, img1, str);
+  cv::erode(img1, img2, str);
+  cv::erode(img2, img1, str);
+  cv::erode(img1, img2, str);
+  cv::erode(img2, img1, str);
+  cv::erode(img1, img2, str);
+  cv::erode(img2, img1, str);
+  str = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
+  cv::erode(img1, img2, str);
+
+  str = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+
+  cv::dilate(img2, img1, str);
+  cv::dilate(img1,img2,str);
+  cv::dilate(img2, img1, str);
+  cv::dilate(img1,img2,str);
+  cv::dilate(img2, img1, str);
+  cv::dilate(img1,img2,str);
+  cv::dilate(img2, img1, str);
+
+  str = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+  cv::erode(img1, img2, str);
+  cv::erode(img2, img1, str);
+  cv::erode(img1, img2, str);
+  cv::erode(img1, img2, str);
+  cv::erode(img2, img1, str);
+
+
+  cv::Mat matArray[] = {image, img1, img2};
+  cv::hconcat(matArray, 3, image);
+
+  cv::imshow("morfologia", image);
+  cv::imwrite("clock_morf.png",img1);
+
+  cv::waitKey();
+  return 0;
 }</code></pre>
           </div>
         </div>
-      </div>
-    </div>
       </div>
     </div>
   </div>
