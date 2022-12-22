@@ -6,6 +6,8 @@
 
 Olá, meu nome é Igor Sérgio e essa página contém a resolução comentada dos exercícios propostos para a disciplina Processamento Digital de Imagens - DCA0445 (UFRN).
 
+= Unidade 1
+
 == 1. Manipulando pixels de uma imagem
 
 === 1.1. Regiões
@@ -443,7 +445,7 @@ void printmask(cv::Mat &m)
 
 int main(int, char **)
 {
-    cv::VideoCapture cap;  
+    cv::VideoCapture cap;  // open the default camera
 
     float lap_gauss[]= {0,0,-1,0,0,
                                    0,-1,-2,-1,0,
@@ -471,7 +473,7 @@ int main(int, char **)
 
     cap.open(1);
 
-    if (!cap.isOpened())  
+    if (!cap.isOpened())  // check if we succeeded
         return -1;
 
     cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
@@ -490,11 +492,11 @@ int main(int, char **)
 
     mask = cv::Mat(3, 3, CV_32F, media);
 
-    absolut = 1;  
+    absolut = 1;  // calcs abs of the image
 
     for (;;)
     {
-        cap >> frame;  
+        cap >> frame;  // get a new frame from camera
         cv::cvtColor(frame, framegray, cv::COLOR_BGR2GRAY);
         cv::flip(framegray, framegray, 1);
         cv::imshow("original", framegray);
@@ -511,7 +513,7 @@ int main(int, char **)
         cv::imshow("filtroespacial", result);
 
         key = (char)cv::waitKey(10);
-        if (key == 27) break; 
+        if (key == 27) break;  // esc pressed!
         switch (key)
         {
         case 'a':
@@ -556,6 +558,14 @@ int main(int, char **)
 
 
 ----
+
+= Unidade 2
+
+== 1. Filtro Homomórfico
+
+Utilizando o programa exemplos/dftfilter.cpp como referência, implemente o filtro homomórfico para melhorar imagens com iluminação irregular. Crie uma cena mal iluminada e ajuste os parâmetros do filtro homomórfico para corrigir a iluminação da melhor forma possível. Assuma que a imagem fornecida é em tons de cinza.
+
+
 
 
 
